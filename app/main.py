@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
-from app.routes import auth
+from app.routes import auth, users, jobs, bids
 
 # Create all database tables
 Base.metadata.create_all(bind=engine)
@@ -13,7 +13,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS middleware — allows frontend to talk to backend
+# CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -22,8 +22,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register routes
+# Register all routes
 app.include_router(auth.router)
+app.include_router(users.router)
+app.include_router(jobs.router)
+app.include_router(bids.router)
 
 
 # ─── ROOT ENDPOINT ───────────────────────────────────────────
