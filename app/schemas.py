@@ -115,6 +115,38 @@ class BidResponse(BaseModel):
     job_id: int
     proposal: str
     bid_amount: float
+    is_accepted: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ─── PAYMENT SCHEMAS ─────────────────────────────────────────
+
+class PaymentIntentCreate(BaseModel):
+    """What we expect when a client starts a payment"""
+    bid_id: int
+
+
+class PaymentIntentResponse(BaseModel):
+    """What we send back so the frontend can confirm the payment"""
+    payment_id: int
+    client_secret: str
+    amount: float
+    currency: str
+    status: str
+
+
+class PaymentResponse(BaseModel):
+    """What we send back for a payment record"""
+    id: int
+    bid_id: int
+    client_id: int
+    amount: float
+    currency: str
+    stripe_payment_intent_id: str
+    status: str
     created_at: datetime
 
     class Config:

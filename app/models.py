@@ -77,13 +77,33 @@ class Bid(Base):
     job_id = Column(Integer, ForeignKey("jobs.id"), nullable=False)
     proposal = Column(Text, nullable=False)
     bid_amount = Column(Float, nullable=False)
-    
+    is_accepted = Column(Boolean, default=False)
+
     # Claude AI scoring
     ai_quality_score = Column(Float, nullable=True)  # 0-100
     match_score = Column(Float, nullable=True)  # 0-100
-    
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships
     freelancer = relationship("Freelancer", back_populates="bids")
     job = relationship("Job", back_populates="bids")
+    payment = relationship("Payment", back_populates="bid", uselist=False)
+
+
+class Payment(Base):
+    __tablename__ = "payments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    bid_id = Column(Integer, ForeignKey("bids.id"), nullable=False, unique=True)  # one payment per bid
+    client_id = Column(Integer, ForeignKey("clients.id"), nullable=False)
+    amount = Column(Float, nullable=False)
+    currency = Column(String, default="usd")
+    stripe_payment_intent_id = Column(String, unique=True, index=True, nullable=False)
+    status = Column(String, default="pending")  # pending / succeeded / failed / canceled
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Relationships
+    bid = relationship("Bid", back_populates="payment")
+    client = relationship("Client")

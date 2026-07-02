@@ -130,6 +130,55 @@ def get_my_bids(
     return bids
 
 
+# ─── ACCEPT A BID ────────────────────────────────────────────
+
+@router.post("/{bid_id}/accept", response_model=schemas.BidResponse)
+def accept_bid(
+    bid_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    """
+    Client accepts a bid on their job.
+    Closes the job and marks the bid as accepted (ready for payment).
+    """
+    bid = db.query(models.Bid).filter(models.Bid.id == bid_id).first()
+    if not bid:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Bid not found"
+        )
+
+    # Verify current user is the client who owns the job
+    client = db.query(models.Client).filter(
+        models.Client.user_id == current_user.id
+    ).first()
+
+    if not client or bid.job.client_id != client.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the job owner can accept bids"
+        )
+
+    # A job can only have one accepted bid
+    already_accepted = db.query(models.Bid).filter(
+        models.Bid.job_id == bid.job_id,
+        models.Bid.is_accepted == True
+    ).first()
+
+    if already_accepted:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This job already has an accepted bid"
+        )
+
+    bid.is_accepted = True
+    bid.job.is_open = False
+    db.commit()
+    db.refresh(bid)
+    return bid
+
+
 # ─── DELETE A BID ────────────────────────────────────────────
 
 @router.delete("/{bid_id}", status_code=204)
@@ -158,6 +207,12 @@ def delete_bid(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Bid not found or you don't own it"
+        )
+
+    if bid.is_accepted:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You can't withdraw a bid that has been accepted"
         )
 
     db.delete(bid)

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
-from app.routes import auth, users, jobs, bids, matching
+from app.routes import auth, users, jobs, bids, matching, payments
 
 # Create all database tables
 Base.metadata.create_all(bind=engine)
@@ -28,6 +28,7 @@ app.include_router(users.router)
 app.include_router(jobs.router)
 app.include_router(bids.router)
 app.include_router(matching.router)
+app.include_router(payments.router)
 
 
 # ─── ROOT ENDPOINT ───────────────────────────────────────────
