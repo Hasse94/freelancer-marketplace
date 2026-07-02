@@ -55,6 +55,13 @@ class Job(Base):
     budget = Column(Float, nullable=False)
     deadline = Column(DateTime(timezone=True), nullable=True)
     is_open = Column(Boolean, default=True)
+    
+    # Claude AI extracted fields
+    extracted_skills = Column(String, nullable=True)  # JSON string of skills
+    complexity_level = Column(String, nullable=True)  # easy/medium/hard
+    domain = Column(String, nullable=True)  # web/mobile/data/etc
+    must_haves = Column(Text, nullable=True)  # JSON string
+    
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships
@@ -70,6 +77,11 @@ class Bid(Base):
     job_id = Column(Integer, ForeignKey("jobs.id"), nullable=False)
     proposal = Column(Text, nullable=False)
     bid_amount = Column(Float, nullable=False)
+    
+    # Claude AI scoring
+    ai_quality_score = Column(Float, nullable=True)  # 0-100
+    match_score = Column(Float, nullable=True)  # 0-100
+    
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships
