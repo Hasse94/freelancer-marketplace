@@ -3,17 +3,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
 from app.routes import auth, users, jobs, bids, matching, payments
 
-# Create all database tables
 Base.metadata.create_all(bind=engine)
 
-# Initialize FastAPI app
 app = FastAPI(
     title="Freelancer Marketplace API",
     description="A full-stack freelancer marketplace with AI-powered matching",
     version="1.0.0"
 )
 
-# CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -22,7 +19,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register all routes
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(jobs.router)
@@ -30,8 +26,6 @@ app.include_router(bids.router)
 app.include_router(matching.router)
 app.include_router(payments.router)
 
-
-# ─── ROOT ENDPOINT ───────────────────────────────────────────
 
 @app.get("/")
 def root():
@@ -41,8 +35,6 @@ def root():
         "status": "running"
     }
 
-
-# ─── HEALTH CHECK ────────────────────────────────────────────
 
 @app.get("/health")
 def health_check():

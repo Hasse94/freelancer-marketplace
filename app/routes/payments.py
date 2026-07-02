@@ -38,8 +38,6 @@ def _create_stripe_intent(bid: models.Bid, client: models.Client) -> stripe.Paym
     )
 
 
-# ─── CREATE PAYMENT INTENT ───────────────────────────────────
-
 @router.post("/create-intent", response_model=schemas.PaymentIntentResponse)
 def create_payment_intent(
     payload: schemas.PaymentIntentCreate,
@@ -52,7 +50,6 @@ def create_payment_intent(
     Safe to call again after a failed payment (creates a fresh intent)
     or while one is pending (returns the same intent).
     """
-    # Must be a client
     client = db.query(models.Client).filter(
         models.Client.user_id == current_user.id
     ).first()
@@ -63,7 +60,6 @@ def create_payment_intent(
             detail="You need a client profile to make payments"
         )
 
-    # Bid must exist and be accepted
     bid = db.query(models.Bid).filter(models.Bid.id == payload.bid_id).first()
     if not bid:
         raise HTTPException(
@@ -77,7 +73,6 @@ def create_payment_intent(
             detail="You can only pay for an accepted bid"
         )
 
-    # Only the client who owns the job can pay
     if bid.job.client_id != client.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -89,7 +84,6 @@ def create_payment_intent(
     ).first()
 
     try:
-        # Duplicate payment protection
         if existing:
             if existing.status == "succeeded":
                 raise HTTPException(
@@ -168,8 +162,6 @@ def create_payment_intent(
         )
 
 
-# ─── STRIPE WEBHOOK ──────────────────────────────────────────
-
 @router.post("/webhook")
 async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     """
@@ -219,8 +211,6 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 
     return {"received": True}
 
-
-# ─── PAYMENT HISTORY ─────────────────────────────────────────
 
 @router.get("/history", response_model=List[schemas.PaymentResponse])
 def get_payment_history(

@@ -7,19 +7,13 @@ from app import models, schemas, auth
 router = APIRouter(prefix="/api/jobs", tags=["Jobs"])
 
 
-# ─── POST A JOB ──────────────────────────────────────────────
-
 @router.post("/", response_model=schemas.JobResponse, status_code=201)
 def create_job(
     job_data: schemas.JobCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    """
-    Client posts a new job.
-    Requires JWT token + must have a client profile.
-    """
-    # Check if user has a client profile
+    """Post a new job (requires a client profile)."""
     client = db.query(models.Client).filter(
         models.Client.user_id == current_user.id
     ).first()
@@ -44,20 +38,15 @@ def create_job(
     return job
 
 
-# ─── GET ALL JOBS ────────────────────────────────────────────
-
 @router.get("/", response_model=List[schemas.JobResponse])
 def get_all_jobs(db: Session = Depends(get_db)):
-    """Get all open jobs — public, no token needed"""
-    jobs = db.query(models.Job).filter(models.Job.is_open == True).all()
-    return jobs
+    """List all open jobs — public, no token needed."""
+    return db.query(models.Job).filter(models.Job.is_open == True).all()
 
-
-# ─── GET SINGLE JOB ──────────────────────────────────────────
 
 @router.get("/{job_id}", response_model=schemas.JobResponse)
 def get_job(job_id: int, db: Session = Depends(get_db)):
-    """Get a single job by ID"""
+    """Get a single job by ID."""
     job = db.query(models.Job).filter(models.Job.id == job_id).first()
 
     if not job:
@@ -68,14 +57,12 @@ def get_job(job_id: int, db: Session = Depends(get_db)):
     return job
 
 
-# ─── GET MY JOBS (CLIENT) ────────────────────────────────────
-
 @router.get("/my/jobs", response_model=List[schemas.JobResponse])
 def get_my_jobs(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    """Get all jobs posted by the logged in client"""
+    """List all jobs posted by the logged in client."""
     client = db.query(models.Client).filter(
         models.Client.user_id == current_user.id
     ).first()
@@ -86,13 +73,10 @@ def get_my_jobs(
             detail="You need a client profile first"
         )
 
-    jobs = db.query(models.Job).filter(
+    return db.query(models.Job).filter(
         models.Job.client_id == client.id
     ).all()
-    return jobs
 
-
-# ─── CLOSE A JOB ─────────────────────────────────────────────
 
 @router.patch("/{job_id}/close", response_model=schemas.JobResponse)
 def close_job(
@@ -100,7 +84,7 @@ def close_job(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    """Close a job so no more bids can be submitted"""
+    """Close a job so no more bids can be submitted."""
     client = db.query(models.Client).filter(
         models.Client.user_id == current_user.id
     ).first()

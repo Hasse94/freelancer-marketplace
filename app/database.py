@@ -4,23 +4,17 @@ from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 import os
 
-# Load .env file
 load_dotenv()
 
-# Get database URL from .env
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Create the database engine
 engine = create_engine(DATABASE_URL)
-
-# Each request gets its own database session
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Base class for all database models
 Base = declarative_base()
 
-# Dependency: get a database session, close it when done
+
 def get_db():
+    """Yield a database session and make sure it's closed after the request."""
     db = SessionLocal()
     try:
         yield db

@@ -48,7 +48,7 @@ export function getApiError(error: unknown): string {
   return error instanceof Error ? error.message : "Something went wrong";
 }
 
-// ─── Auth ────────────────────────────────────────────────────
+// Auth
 
 export async function login(email: string, password: string): Promise<TokenResponse> {
   // FastAPI's OAuth2PasswordRequestForm expects form-encoded username/password
@@ -69,7 +69,7 @@ export async function getMe(): Promise<User> {
   return data;
 }
 
-// ─── Profiles ────────────────────────────────────────────────
+// Profiles
 
 export async function getMyClientProfile(): Promise<ClientProfile> {
   const { data } = await api.get<ClientProfile>("/api/users/client/me");
@@ -101,7 +101,7 @@ export async function createFreelancerProfile(input: {
   return data;
 }
 
-// ─── Jobs ────────────────────────────────────────────────────
+// Jobs
 
 export async function getJobs(): Promise<Job[]> {
   const { data } = await api.get<Job[]>("/api/jobs/");
@@ -133,7 +133,7 @@ export async function closeJob(jobId: number): Promise<Job> {
   return data;
 }
 
-// ─── Bids ────────────────────────────────────────────────────
+// Bids
 
 export async function submitBid(
   jobId: number,
@@ -158,7 +158,7 @@ export async function acceptBid(bidId: number): Promise<Bid> {
   return data;
 }
 
-// ─── AI Matching ─────────────────────────────────────────────
+// AI matching
 
 export async function getMatchingFreelancers(jobId: number): Promise<MatchingResponse> {
   const { data } = await api.get<MatchingResponse>(
@@ -172,7 +172,7 @@ export async function getFreelancerByUserId(userId: number): Promise<FreelancerP
   return data;
 }
 
-// ─── Payments ────────────────────────────────────────────────
+// Payments
 
 export async function getPaymentHistory(): Promise<Payment[]> {
   const { data } = await api.get<Payment[]>("/api/payments/history");

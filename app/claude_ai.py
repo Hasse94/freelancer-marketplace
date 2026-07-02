@@ -9,9 +9,22 @@ load_dotenv()
 client = Anthropic()
 
 
-# ─── JOB SUMMARIZATION (HAIKU) ────────────────────────────────
+def _extract_json(response_text: str) -> str:
+    """Claude occasionally wraps its answer in a ```json fence despite instructions."""
+    response_text = response_text.strip()
+    if response_text.startswith("```"):
+        response_text = response_text.split("```")[1]
+        if response_text.startswith("json"):
+            response_text = response_text[4:]
+    return response_text.strip()
+
 
 def summarize_job(job_title: str, job_description: str) -> Dict:
+    """Extract structured fields (skills, complexity, domain) from a raw job post.
+
+    Uses Haiku — the task is simple extraction, so the cheaper model is plenty.
+    Falls back to neutral defaults if the call or parsing fails.
+    """
     prompt = f"""You are a job analysis expert. Extract and structure this job posting.
 
 Job Title: {job_title}
@@ -41,19 +54,7 @@ Respond ONLY with valid JSON, no markdown:
                 {"role": "user", "content": prompt}
             ]
         )
-
-        response_text = message.content[0].text
-
-        # Strip markdown code blocks if present
-        response_text = response_text.strip()
-        if response_text.startswith("```"):
-            response_text = response_text.split("```")[1]
-            if response_text.startswith("json"):
-                response_text = response_text[4:]
-        response_text = response_text.strip()
-
-        result = json.loads(response_text)
-        return result
+        return json.loads(_extract_json(message.content[0].text))
 
     except Exception as e:
         print(f"Error in job summarization: {e}")
@@ -66,8 +67,6 @@ Respond ONLY with valid JSON, no markdown:
         }
 
 
-# ─── FREELANCER MATCHING (SONNET) ────────────────────────────
-
 def match_freelancers(
     job_id: int,
     job_title: str,
@@ -76,7 +75,11 @@ def match_freelancers(
     job_budget: float,
     freelancers: List[Dict]
 ) -> List[Dict]:
+    """Rank freelancers against a job, best match first.
 
+    Uses Sonnet — ranking across several profiles needs more judgment
+    than extraction. Returns [] if the call or parsing fails.
+    """
     freelancers_text = "\n".join([
         f"ID: {f['id']}, Name: {f['name']}, Skills: {f['skills']}, Rate: ${f['hourly_rate']}/hr, Bio: {f['bio']}"
         for f in freelancers
@@ -113,18 +116,7 @@ Respond ONLY with valid JSON array, no markdown:
                 {"role": "user", "content": prompt}
             ]
         )
-
-        response_text = message.content[0].text
-
-        # Strip markdown code blocks if present
-        response_text = response_text.strip()
-        if response_text.startswith("```"):
-            response_text = response_text.split("```")[1]
-            if response_text.startswith("json"):
-                response_text = response_text[4:]
-        response_text = response_text.strip()
-
-        result = json.loads(response_text)
+        result = json.loads(_extract_json(message.content[0].text))
         result.sort(key=lambda x: x["match_score"], reverse=True)
         return result
 

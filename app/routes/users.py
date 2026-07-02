@@ -6,19 +6,13 @@ from app import models, schemas, auth
 router = APIRouter(prefix="/api/users", tags=["Users"])
 
 
-# ─── FREELANCER PROFILE ──────────────────────────────────────
-
 @router.post("/freelancer", response_model=schemas.FreelancerResponse, status_code=201)
 def create_freelancer_profile(
     profile_data: schemas.FreelancerCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    """
-    Create a freelancer profile for the logged in user.
-    Requires JWT token.
-    """
-    # Check if profile already exists
+    """Create a freelancer profile for the logged in user."""
     existing = db.query(models.Freelancer).filter(
         models.Freelancer.user_id == current_user.id
     ).first()
@@ -47,7 +41,7 @@ def get_my_freelancer_profile(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    """Get the logged in user's freelancer profile"""
+    """Get the logged in user's freelancer profile."""
     profile = db.query(models.Freelancer).filter(
         models.Freelancer.user_id == current_user.id
     ).first()
@@ -62,7 +56,7 @@ def get_my_freelancer_profile(
 
 @router.get("/freelancer/{user_id}", response_model=schemas.FreelancerResponse)
 def get_freelancer_profile(user_id: int, db: Session = Depends(get_db)):
-    """Get any freelancer's profile by user ID"""
+    """Get any freelancer's profile by user ID."""
     profile = db.query(models.Freelancer).filter(
         models.Freelancer.user_id == user_id
     ).first()
@@ -75,18 +69,13 @@ def get_freelancer_profile(user_id: int, db: Session = Depends(get_db)):
     return profile
 
 
-# ─── CLIENT PROFILE ──────────────────────────────────────────
-
 @router.post("/client", response_model=schemas.ClientResponse, status_code=201)
 def create_client_profile(
     profile_data: schemas.ClientCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    """
-    Create a client profile for the logged in user.
-    Requires JWT token.
-    """
+    """Create a client profile for the logged in user."""
     existing = db.query(models.Client).filter(
         models.Client.user_id == current_user.id
     ).first()
@@ -113,7 +102,7 @@ def get_my_client_profile(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    """Get the logged in user's client profile"""
+    """Get the logged in user's client profile."""
     profile = db.query(models.Client).filter(
         models.Client.user_id == current_user.id
     ).first()

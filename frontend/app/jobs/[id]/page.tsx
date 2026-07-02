@@ -19,8 +19,6 @@ import PayNowModal from "@/app/components/PayNowModal";
 import { PageFade, SlideUp } from "@/app/components/motion";
 import { formatDate, formatMoney } from "@/app/components/JobCard";
 
-// ─── AI matching section (job owner only) ────────────────────
-
 function MatchCard({ match, rank }: { match: FreelancerMatch; rank: number }) {
   const [expanded, setExpanded] = useState(false);
   const scoreColor =
@@ -152,8 +150,6 @@ function MatchesSection({ jobId, isOwner }: { jobId: number; isOwner: boolean })
   );
 }
 
-// ─── Bid form (freelancers) ──────────────────────────────────
-
 function BidForm({ jobId, onSubmitted }: { jobId: number; onSubmitted: () => void }) {
   const [proposal, setProposal] = useState("");
   const [amount, setAmount] = useState("");
@@ -251,8 +247,6 @@ function BidForm({ jobId, onSubmitted }: { jobId: number; onSubmitted: () => voi
     </form>
   );
 }
-
-// ─── Bids list with accept buttons (job owner) ───────────────
 
 function BidsSection({ jobId, onAccepted }: { jobId: number; onAccepted: () => void }) {
   const [bids, setBids] = useState<Bid[] | null>(null);
@@ -358,8 +352,6 @@ function BidsSection({ jobId, onAccepted }: { jobId: number; onAccepted: () => v
     </section>
   );
 }
-
-// ─── Page ────────────────────────────────────────────────────
 
 export default function JobDetailPage() {
   const params = useParams<{ id: string }>();

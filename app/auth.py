@@ -19,27 +19,20 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 
-# ─── PASSWORD FUNCTIONS ──────────────────────────────────────
-
 def hash_password(password: str) -> str:
-    """Turn plain password into a hash"""
     pwd_bytes = password.encode("utf-8")
     salt = bcrypt.gensalt()
     return bcrypt.hashpw(pwd_bytes, salt).decode("utf-8")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Check if plain password matches the stored hash"""
     return bcrypt.checkpw(
         plain_password.encode("utf-8"),
         hashed_password.encode("utf-8")
     )
 
 
-# ─── JWT FUNCTIONS ───────────────────────────────────────────
-
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    """Generate a JWT token"""
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -50,7 +43,6 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 
 def verify_token(token: str, credentials_exception) -> schemas.TokenData:
-    """Decode and verify a JWT token"""
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
@@ -61,15 +53,11 @@ def verify_token(token: str, credentials_exception) -> schemas.TokenData:
         raise credentials_exception
 
 
-# ─── USER FUNCTIONS ──────────────────────────────────────────
-
 def get_user_by_email(db: Session, email: str):
-    """Find a user by email in the database"""
     return db.query(models.User).filter(models.User.email == email).first()
 
 
 def authenticate_user(db: Session, email: str, password: str):
-    """Check email + password, return user if valid"""
     user = get_user_by_email(db, email)
     if not user:
         return False
@@ -78,12 +66,11 @@ def authenticate_user(db: Session, email: str, password: str):
     return user
 
 
-# ─── CURRENT USER DEPENDENCY ─────────────────────────────────
-
 def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
 ):
+    """FastAPI dependency: resolve the JWT bearer token to a User or raise 401."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",

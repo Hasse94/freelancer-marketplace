@@ -7,8 +7,6 @@ from app import models, schemas, auth
 router = APIRouter(prefix="/api/bids", tags=["Bids"])
 
 
-# ─── SUBMIT A BID ────────────────────────────────────────────
-
 @router.post("/{job_id}", response_model=schemas.BidResponse, status_code=201)
 def submit_bid(
     job_id: int,
@@ -16,11 +14,7 @@ def submit_bid(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    """
-    Freelancer submits a bid on a job.
-    Requires JWT token + must have a freelancer profile.
-    """
-    # Check if user has a freelancer profile
+    """Submit a bid on an open job (requires a freelancer profile, one bid per job)."""
     freelancer = db.query(models.Freelancer).filter(
         models.Freelancer.user_id == current_user.id
     ).first()
@@ -31,7 +25,6 @@ def submit_bid(
             detail="You need a freelancer profile to submit bids"
         )
 
-    # Check if job exists and is open
     job = db.query(models.Job).filter(models.Job.id == job_id).first()
 
     if not job:
@@ -46,7 +39,6 @@ def submit_bid(
             detail="This job is no longer accepting bids"
         )
 
-    # Check if freelancer already bid on this job
     existing_bid = db.query(models.Bid).filter(
         models.Bid.freelancer_id == freelancer.id,
         models.Bid.job_id == job_id
@@ -71,19 +63,13 @@ def submit_bid(
     return bid
 
 
-# ─── GET ALL BIDS FOR A JOB ──────────────────────────────────
-
 @router.get("/job/{job_id}", response_model=List[schemas.BidResponse])
 def get_bids_for_job(
     job_id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    """
-    Get all bids for a specific job.
-    Only the client who owns the job can see all bids.
-    """
-    # Verify job exists
+    """List all bids for a job — only visible to the client who owns it."""
     job = db.query(models.Job).filter(models.Job.id == job_id).first()
     if not job:
         raise HTTPException(
@@ -91,7 +77,6 @@ def get_bids_for_job(
             detail="Job not found"
         )
 
-    # Verify current user is the client who owns this job
     client = db.query(models.Client).filter(
         models.Client.user_id == current_user.id
     ).first()
@@ -102,18 +87,15 @@ def get_bids_for_job(
             detail="Only the job owner can view bids"
         )
 
-    bids = db.query(models.Bid).filter(models.Bid.job_id == job_id).all()
-    return bids
+    return db.query(models.Bid).filter(models.Bid.job_id == job_id).all()
 
-
-# ─── GET MY BIDS (FREELANCER) ────────────────────────────────
 
 @router.get("/my/bids", response_model=List[schemas.BidResponse])
 def get_my_bids(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    """Get all bids submitted by the logged in freelancer"""
+    """List all bids submitted by the logged in freelancer."""
     freelancer = db.query(models.Freelancer).filter(
         models.Freelancer.user_id == current_user.id
     ).first()
@@ -124,13 +106,10 @@ def get_my_bids(
             detail="You need a freelancer profile first"
         )
 
-    bids = db.query(models.Bid).filter(
+    return db.query(models.Bid).filter(
         models.Bid.freelancer_id == freelancer.id
     ).all()
-    return bids
 
-
-# ─── ACCEPT A BID ────────────────────────────────────────────
 
 @router.post("/{bid_id}/accept", response_model=schemas.BidResponse)
 def accept_bid(
@@ -138,10 +117,7 @@ def accept_bid(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    """
-    Client accepts a bid on their job.
-    Closes the job and marks the bid as accepted (ready for payment).
-    """
+    """Accept a bid, which also closes the job to further bidding."""
     bid = db.query(models.Bid).filter(models.Bid.id == bid_id).first()
     if not bid:
         raise HTTPException(
@@ -149,7 +125,6 @@ def accept_bid(
             detail="Bid not found"
         )
 
-    # Verify current user is the client who owns the job
     client = db.query(models.Client).filter(
         models.Client.user_id == current_user.id
     ).first()
@@ -160,7 +135,6 @@ def accept_bid(
             detail="Only the job owner can accept bids"
         )
 
-    # A job can only have one accepted bid
     already_accepted = db.query(models.Bid).filter(
         models.Bid.job_id == bid.job_id,
         models.Bid.is_accepted == True
@@ -179,15 +153,13 @@ def accept_bid(
     return bid
 
 
-# ─── DELETE A BID ────────────────────────────────────────────
-
 @router.delete("/{bid_id}", status_code=204)
 def delete_bid(
     bid_id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    """Freelancer withdraws their bid"""
+    """Withdraw a bid (not allowed once it has been accepted)."""
     freelancer = db.query(models.Freelancer).filter(
         models.Freelancer.user_id == current_user.id
     ).first()

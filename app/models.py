@@ -12,7 +12,6 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    # Relationships
     freelancer_profile = relationship("Freelancer", back_populates="user", uselist=False)
     client_profile = relationship("Client", back_populates="user", uselist=False)
 
@@ -27,7 +26,6 @@ class Freelancer(Base):
     hourly_rate = Column(Float, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    # Relationships
     user = relationship("User", back_populates="freelancer_profile")
     bids = relationship("Bid", back_populates="freelancer")
 
@@ -40,7 +38,6 @@ class Client(Base):
     company_name = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    # Relationships
     user = relationship("User", back_populates="client_profile")
     jobs = relationship("Job", back_populates="client")
 
@@ -55,16 +52,15 @@ class Job(Base):
     budget = Column(Float, nullable=False)
     deadline = Column(DateTime(timezone=True), nullable=True)
     is_open = Column(Boolean, default=True)
-    
-    # Claude AI extracted fields
-    extracted_skills = Column(String, nullable=True)  # JSON string of skills
-    complexity_level = Column(String, nullable=True)  # easy/medium/hard
-    domain = Column(String, nullable=True)  # web/mobile/data/etc
-    must_haves = Column(Text, nullable=True)  # JSON string
-    
+
+    # Populated by Claude when the client runs job summarization
+    extracted_skills = Column(String, nullable=True)  # JSON array of skill names
+    complexity_level = Column(String, nullable=True)  # easy / medium / hard
+    domain = Column(String, nullable=True)  # web / mobile / data / devops / design / other
+    must_haves = Column(Text, nullable=True)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    # Relationships
     client = relationship("Client", back_populates="jobs")
     bids = relationship("Bid", back_populates="job")
 
@@ -79,13 +75,12 @@ class Bid(Base):
     bid_amount = Column(Float, nullable=False)
     is_accepted = Column(Boolean, default=False)
 
-    # Claude AI scoring
-    ai_quality_score = Column(Float, nullable=True)  # 0-100
-    match_score = Column(Float, nullable=True)  # 0-100
+    # Scores (0-100) written back by the AI matching endpoint
+    ai_quality_score = Column(Float, nullable=True)
+    match_score = Column(Float, nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    # Relationships
     freelancer = relationship("Freelancer", back_populates="bids")
     job = relationship("Job", back_populates="bids")
     payment = relationship("Payment", back_populates="bid", uselist=False)
@@ -95,7 +90,8 @@ class Payment(Base):
     __tablename__ = "payments"
 
     id = Column(Integer, primary_key=True, index=True)
-    bid_id = Column(Integer, ForeignKey("bids.id"), nullable=False, unique=True)  # one payment per bid
+    # unique=True enforces one payment per bid at the database level
+    bid_id = Column(Integer, ForeignKey("bids.id"), nullable=False, unique=True)
     client_id = Column(Integer, ForeignKey("clients.id"), nullable=False)
     amount = Column(Float, nullable=False)
     currency = Column(String, default="usd")
@@ -104,6 +100,5 @@ class Payment(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    # Relationships
     bid = relationship("Bid", back_populates="payment")
     client = relationship("Client")
