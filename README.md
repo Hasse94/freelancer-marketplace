@@ -1,10 +1,11 @@
-# Freelancer Marketplace API
+# Freelancer Marketplace
 
-A full-stack freelancer marketplace with AI-powered job summarization and intelligent freelancer matching, built with FastAPI, PostgreSQL, and Claude API.
+A full-stack freelancer marketplace with AI-powered job summarization and intelligent freelancer matching, built with FastAPI, PostgreSQL, Next.js, and Claude API.
 
 ## 🚀 Tech Stack
 
 - **Backend:** FastAPI, Python 3.11
+- **Frontend:** Next.js 14 (App Router), TypeScript, Tailwind CSS, Framer Motion
 - **Database:** PostgreSQL 18.4, SQLAlchemy
 - **Auth:** JWT + bcrypt
 - **AI:** Claude Haiku (job summarization), Claude Sonnet (freelancer matching)
@@ -17,7 +18,8 @@ A full-stack freelancer marketplace with AI-powered job summarization and intell
 - [x] Phase 2 — Profiles, job posting, bidding system
 - [x] Phase 3 — Claude API (job summarization + freelancer matching)
 - [x] Phase 4 — Stripe payments
-- [ ] Phase 5 — Deploy (Vercel frontend + Railway/Render backend)
+- [x] Phase 5 — Next.js frontend
+- [ ] Phase 6 — Deploy (Vercel frontend + Railway/Render backend)
 
 ## 📦 Installation
 
@@ -67,6 +69,29 @@ uvicorn app.main:app --reload
 ```
 
 API docs: http://127.0.0.1:8000/docs
+
+## 🖥️ Frontend (Next.js)
+
+```bash
+cd frontend
+npm install
+cp .env.local.example .env.local   # set API URL + Stripe publishable key
+npm run dev
+```
+
+App runs at http://localhost:3000 (expects the backend on port 8000).
+
+**Pages**
+- `/` — landing page
+- `/auth/login`, `/auth/signup` — JWT auth
+- `/jobs` — browse jobs; `/jobs/[id]` — job detail with bidding, AI summary, and AI freelancer matches
+- `/dashboard` — role-based tabs: my jobs, my bids, payments, profile setup
+
+**Highlights**
+- Client-side auth context with JWT persisted in localStorage
+- Stripe Elements payment modal for paying accepted bids
+- Framer Motion page transitions and micro-interactions
+- Typed API client (axios) shared across pages
 
 ## 🔌 API Endpoints
 
