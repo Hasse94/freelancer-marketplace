@@ -1,10 +1,12 @@
 from anthropic import Anthropic
 from typing import List, Dict
 import json
-import os
+import logging
 from dotenv import load_dotenv
 
 load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 client = Anthropic()
 
@@ -56,8 +58,8 @@ Respond ONLY with valid JSON, no markdown:
         )
         return json.loads(_extract_json(message.content[0].text))
 
-    except Exception as e:
-        print(f"Error in job summarization: {e}")
+    except Exception:
+        logger.exception("Job summarization failed")
         return {
             "skills": [],
             "complexity": "medium",
@@ -68,7 +70,6 @@ Respond ONLY with valid JSON, no markdown:
 
 
 def match_freelancers(
-    job_id: int,
     job_title: str,
     job_skills: List[str],
     job_complexity: str,
@@ -120,6 +121,6 @@ Respond ONLY with valid JSON array, no markdown:
         result.sort(key=lambda x: x["match_score"], reverse=True)
         return result
 
-    except Exception as e:
-        print(f"Error in freelancer matching: {e}")
+    except Exception:
+        logger.exception("Freelancer matching failed")
         return []

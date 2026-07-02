@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app import models, schemas, auth, claude_ai
+from app import models, auth, claude_ai
 import json
 
 router = APIRouter(prefix="/api/matching", tags=["Matching"])
@@ -108,7 +108,6 @@ def find_matching_freelancers(
             extracted_skills = []
 
     matches = claude_ai.match_freelancers(
-        job_id=job.id,
         job_title=job.title,
         job_skills=extracted_skills or [],
         job_complexity=job.complexity_level or "medium",
