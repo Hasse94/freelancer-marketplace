@@ -1,0 +1,7 @@
+app/
+venv/
+requirements.txt
+Procfile
+render.yaml
+.env
+.claude/
