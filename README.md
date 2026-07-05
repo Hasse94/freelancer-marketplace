@@ -1,11 +1,12 @@
 # FreelanceHub
 
-A full-stack freelancer marketplace built with FastAPI, PostgreSQL, and Claude AI. Clients post jobs, freelancers bid, and AI handles the matching.
+A full-stack freelancer marketplace built with FastAPI, PostgreSQL, Next.js, and Claude AI. Clients post jobs, freelancers bid, and AI handles the matching.
 
 ## Tech Stack
 
-**Backend:** FastAPI, Python 3.11, PostgreSQL, SQLAlchemy, JWT + bcrypt  
-**AI:** Claude Haiku (job summarization), Claude Sonnet (freelancer matching)  
+**Backend:** FastAPI, Python 3.11, PostgreSQL, SQLAlchemy, JWT + bcrypt
+**Frontend:** Next.js 14 (App Router), TypeScript, Tailwind CSS, Framer Motion, React Three Fiber
+**AI:** Claude Haiku (job summarization), Claude Sonnet (freelancer matching)
 **Payments:** Stripe (test mode)
 
 ## What It Does
@@ -16,6 +17,7 @@ A full-stack freelancer marketplace built with FastAPI, PostgreSQL, and Claude A
 - Freelancers browse jobs and submit proposals
 - Clients accept bids and pay through Stripe
 - Webhook-verified payments with duplicate charge protection
+- Dark-themed UI with a 3D animated hero, built by hand with React Three Fiber
 
 ## API Endpoints
 
@@ -66,7 +68,7 @@ A full-stack freelancer marketplace built with FastAPI, PostgreSQL, and Claude A
 | POST | /api/payments/webhook | Stripe webhook |
 | GET | /api/payments/history | Payment history |
 
-## Setup
+## Backend Setup
 
 ```bash
 git clone https://github.com/Hasse94/freelancer-marketplace.git
@@ -91,7 +93,6 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 
 
 
-
 Create the database tables:
 ```bash
 python -c "from app.database import Base, engine; from app import models; Base.metadata.create_all(bind=engine)"
@@ -104,13 +105,36 @@ uvicorn app.main:app --reload
 
 API docs at http://127.0.0.1:8000/docs
 
+## Frontend Setup
+
+```bash
+cd frontend
+npm install
+```
+
+Create a `.env.local` file:
+
+
+NEXT_PUBLIC_API_URL=http://localhost:8000
+
+
+
+Run it:
+```bash
+npm run dev
+```
+
+App runs at http://localhost:3000
+
+**Pages:** landing (with an animated 3D hero), job listing with search/filters, job detail (AI analysis, freelancer matching, bidding), auth (login/signup), and a dashboard with tabs for jobs, bids, and payments.
+
 ## Roadmap
 
 - [x] Phase 1 — Auth + database
 - [x] Phase 2 — Profiles, jobs, bids
 - [x] Phase 3 — Claude AI integration
 - [x] Phase 4 — Stripe payments
-- [ ] Phase 5 — React frontend
+- [x] Phase 5 — Next.js frontend
 - [ ] Phase 6 — Deploy
 
 ## License
