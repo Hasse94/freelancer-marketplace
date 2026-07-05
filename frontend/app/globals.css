@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+:root {
+  --orange: #f97316;
+  --orange-dark: #ea580c;
+  --bg: #0a0a0a;
+  --card: #1a1a1a;
+  --border: #2a2a2a;
+  --text: #ffffff;
+  --text-secondary: #a3a3a3;
+  --success: #22c55e;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+::selection {
+  background-color: #f9731640;
+  color: #ffffff;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}

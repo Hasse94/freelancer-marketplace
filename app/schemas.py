@@ -72,8 +72,12 @@ class JobResponse(BaseModel):
     title: str
     description: str
     budget: float
-    deadline: Optional[datetime]
+    deadline: Optional[datetime] = None
     is_open: bool
+    extracted_skills: Optional[str] = None
+    complexity_level: Optional[str] = None
+    domain: Optional[str] = None
+    must_haves: Optional[str] = None
     created_at: datetime
 
     class Config:
