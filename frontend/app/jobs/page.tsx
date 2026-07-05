@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { API_URL } from "../lib/api";
 
 interface Job {
   id: number;
@@ -28,7 +29,7 @@ export default function Jobs() {
 
   const fetchJobs = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/jobs/");
+      const res = await fetch(`${API_URL}/api/jobs/`);
       const data = await res.json();
       setJobs(data);
     } catch {

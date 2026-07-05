@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
+import { API_URL } from "../lib/api";
 
 interface Job {
   id: number;
@@ -65,8 +66,7 @@ export default function JobDetail() {
 
   const fetchJob = async () => {
     try {
-      const res = await fetch(`http://localhost:8000/api/jobs/${jobId}`);
-      if (!res.ok) {
+  const res = await fetch(`${API_URL}/api/jobs/${jobId}`); if (!res.ok) {
         setError("Job not found.");
         return;
       }

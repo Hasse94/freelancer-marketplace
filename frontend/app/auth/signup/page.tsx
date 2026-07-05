@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { API_URL } from "../lib/api";
 
 export default function SignUp() {
   const [email, setEmail] = useState("");
@@ -27,7 +28,7 @@ export default function SignUp() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:8000/api/auth/register", {
+      const res = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -41,7 +42,7 @@ export default function SignUp() {
       }
 
       // Auto-login after registration
-      const loginRes = await fetch("http://localhost:8000/api/auth/login", {
+      const loginRes = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: `username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`,

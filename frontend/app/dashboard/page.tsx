@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { API_URL } from "../lib/api";
 
 interface Job {
   id: number;
@@ -65,7 +66,7 @@ export default function Dashboard() {
 
   const fetchData = async () => {
     try {
-      const meRes = await fetch("http://localhost:8000/api/auth/me", { headers });
+      const meRes = await fetch(`${API_URL}/api/auth/me`, { headers });
       if (!meRes.ok) {
         localStorage.removeItem("token");
         window.location.href = "/auth/login";
@@ -74,11 +75,11 @@ export default function Dashboard() {
       const me = await meRes.json();
       setEmail(me.email);
 
-      const [jobsRes, bidsRes, paymentsRes] = await Promise.all([
-        fetch("http://localhost:8000/api/jobs/my/jobs", { headers }).catch(() => null),
-        fetch("http://localhost:8000/api/bids/my/bids", { headers }).catch(() => null),
-        fetch("http://localhost:8000/api/payments/history", { headers }).catch(() => null),
-      ]);
+     const [jobsRes, bidsRes, paymentsRes] = await Promise.all([
+  fetch(`${API_URL}/api/jobs/my/jobs`, { headers }).catch(() => null),
+  fetch(`${API_URL}/api/bids/my/bids`, { headers }).catch(() => null),
+  fetch(`${API_URL}/api/payments/history`, { headers }).catch(() => null),
+]);
 
       if (jobsRes?.ok) setJobs(await jobsRes.json());
       if (bidsRes?.ok) setBids(await bidsRes.json());
@@ -96,7 +97,7 @@ export default function Dashboard() {
     setPosting(true);
 
     try {
-      const res = await fetch("http://localhost:8000/api/jobs/", {
+      const res = await fetch(`${API_URL}/api/jobs/`, {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },
         body: JSON.stringify({
