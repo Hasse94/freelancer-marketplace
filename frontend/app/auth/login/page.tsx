@@ -1,7 +1,7 @@
 "use client";
-
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { API_URL } from "../../lib/api";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -13,21 +13,17 @@ export default function Login() {
     e.preventDefault();
     setError("");
     setLoading(true);
-
     try {
-      const res = await fetch(`${API_URL}/api/jobs/`, {
+      const res = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: `username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`,
       });
-
       const data = await res.json();
-
       if (!res.ok) {
         setError(data.detail || "Invalid email or password");
         return;
       }
-
       localStorage.setItem("token", data.access_token);
       window.location.href = "/dashboard";
     } catch {
@@ -47,7 +43,6 @@ export default function Login() {
       >
         <h1 className="text-3xl font-bold mb-2">Welcome back</h1>
         <p className="text-neutral-400 mb-8">Log in to your FreelanceHub account.</p>
-
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="text-sm text-neutral-400 block mb-2">Email</label>
@@ -60,7 +55,6 @@ export default function Login() {
               placeholder="you@example.com"
             />
           </div>
-
           <div>
             <label className="text-sm text-neutral-400 block mb-2">Password</label>
             <input
@@ -72,13 +66,11 @@ export default function Login() {
               placeholder="Your password"
             />
           </div>
-
           {error && (
             <div className="px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
               {error}
             </div>
           )}
-
           <button
             type="submit"
             disabled={loading}
@@ -87,7 +79,6 @@ export default function Login() {
             {loading ? "Logging in..." : "Log In"}
           </button>
         </form>
-
         <p className="text-neutral-500 text-sm text-center mt-6">
           No account yet?{" "}
           <a href="/auth/signup" className="text-orange-500 hover:underline">Sign up</a>

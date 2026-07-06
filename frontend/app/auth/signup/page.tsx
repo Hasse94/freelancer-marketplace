@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { API_URL } from "../lib/api";
+import { API_URL } from "../../lib/api";
 
 export default function SignUp() {
   const [email, setEmail] = useState("");

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { API_URL } from "../lib/api";
+import { API_URL } from "../../lib/api";
 
 interface Job {
   id: number;
@@ -75,7 +75,7 @@ export default function JobDetail() {
 
       // fetch bids if logged in
       if (token) {
-        const bidsRes = await fetch(`http://localhost:8000/api/bids/job/${jobId}`, {
+        const bidsRes = await fetch(`${API_URL}/api/bids/job/${jobId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (bidsRes.ok) setBids(await bidsRes.json());
@@ -91,7 +91,7 @@ export default function JobDetail() {
     if (!token) return;
     setSummarizing(true);
     try {
-      const res = await fetch(`http://localhost:8000/api/matching/summarize-job/${jobId}`, {
+      const res = await fetch(`${API_URL}/api/matching/summarize-job/${jobId}`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -109,7 +109,7 @@ export default function JobDetail() {
     if (!token) return;
     setMatching(true);
     try {
-      const res = await fetch(`http://localhost:8000/api/matching/job/${jobId}/matching-freelancers`, {
+      const res = await fetch(`${API_URL}/api/matching/job/${jobId}/matching-freelancers`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -133,7 +133,7 @@ export default function JobDetail() {
     setSubmitting(true);
 
     try {
-      const res = await fetch(`http://localhost:8000/api/bids/${jobId}`, {
+      const res = await fetch(`${API_URL}/api/bids/${jobId}`, {
         method: "POST",
         headers,
         body: JSON.stringify({
@@ -162,7 +162,7 @@ export default function JobDetail() {
   const handleAcceptBid = async (bidId: number) => {
     if (!token) return;
     try {
-      const res = await fetch(`http://localhost:8000/api/bids/${bidId}/accept`, {
+      const res = await fetch(`${API_URL}/api/bids/${bidId}/accept`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
