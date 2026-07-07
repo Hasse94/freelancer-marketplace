@@ -44,6 +44,19 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // profile state
+  const [hasClient, setHasClient] = useState(false);
+  const [hasFreelancer, setHasFreelancer] = useState(false);
+
+  // which profile form is open: "client" | "freelancer" | null
+  const [profileForm, setProfileForm] = useState<"client" | "freelancer" | null>(null);
+  const [companyName, setCompanyName] = useState("");
+  const [skills, setSkills] = useState("");
+  const [hourlyRate, setHourlyRate] = useState("");
+  const [bio, setBio] = useState("");
+  const [profileError, setProfileError] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
+
   // post job form
   const [showJobForm, setShowJobForm] = useState(false);
   const [jobTitle, setJobTitle] = useState("");
@@ -75,11 +88,19 @@ export default function Dashboard() {
       const me = await meRes.json();
       setEmail(me.email);
 
-     const [jobsRes, bidsRes, paymentsRes] = await Promise.all([
-  fetch(`${API_URL}/api/jobs/my/jobs`, { headers }).catch(() => null),
-  fetch(`${API_URL}/api/bids/my/bids`, { headers }).catch(() => null),
-  fetch(`${API_URL}/api/payments/history`, { headers }).catch(() => null),
-]);
+      // check which profiles exist
+      const [clientRes, freelancerRes] = await Promise.all([
+        fetch(`${API_URL}/api/users/client/me`, { headers }).catch(() => null),
+        fetch(`${API_URL}/api/users/freelancer/me`, { headers }).catch(() => null),
+      ]);
+      setHasClient(!!clientRes?.ok);
+      setHasFreelancer(!!freelancerRes?.ok);
+
+      const [jobsRes, bidsRes, paymentsRes] = await Promise.all([
+        fetch(`${API_URL}/api/jobs/my/jobs`, { headers }).catch(() => null),
+        fetch(`${API_URL}/api/bids/my/bids`, { headers }).catch(() => null),
+        fetch(`${API_URL}/api/payments/history`, { headers }).catch(() => null),
+      ]);
 
       if (jobsRes?.ok) setJobs(await jobsRes.json());
       if (bidsRes?.ok) setBids(await bidsRes.json());
@@ -91,11 +112,66 @@ export default function Dashboard() {
     }
   };
 
+  const handleCreateClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileError("");
+    setSavingProfile(true);
+    try {
+      const res = await fetch(`${API_URL}/api/users/client`, {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ company_name: companyName }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setProfileError(data.detail || "Could not create client profile.");
+        return;
+      }
+      setCompanyName("");
+      setProfileForm(null);
+      setHasClient(true);
+    } catch {
+      setProfileError("Cannot reach the server.");
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const handleCreateFreelancer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileError("");
+    setSavingProfile(true);
+    try {
+      const res = await fetch(`${API_URL}/api/users/freelancer`, {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          skills,
+          hourly_rate: parseFloat(hourlyRate),
+          bio,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setProfileError(data.detail || "Could not create freelancer profile.");
+        return;
+      }
+      setSkills("");
+      setHourlyRate("");
+      setBio("");
+      setProfileForm(null);
+      setHasFreelancer(true);
+    } catch {
+      setProfileError("Cannot reach the server.");
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
   const handlePostJob = async (e: React.FormEvent) => {
     e.preventDefault();
     setJobError("");
     setPosting(true);
-
     try {
       const res = await fetch(`${API_URL}/api/jobs/`, {
         method: "POST",
@@ -106,14 +182,11 @@ export default function Dashboard() {
           budget: parseFloat(jobBudget),
         }),
       });
-
       const data = await res.json();
-
       if (!res.ok) {
         setJobError(data.detail || "Failed to post job.");
         return;
       }
-
       setJobTitle("");
       setJobDesc("");
       setJobBudget("");
@@ -183,6 +256,140 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* Profile setup — shows role cards for whichever profile is missing */}
+        {(!hasClient || !hasFreelancer) && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.05 }}
+            className="mb-8 p-6 bg-[#1a1a1a] border border-neutral-800 rounded-xl"
+          >
+            <h2 className="text-lg font-semibold mb-1">Set up your profile</h2>
+            <p className="text-neutral-400 text-sm mb-5">
+              Add a role to start using FreelanceHub. You can be both.
+            </p>
+
+            {profileError && (
+              <div className="px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm mb-4">
+                {profileError}
+              </div>
+            )}
+
+            {/* role choice cards */}
+            {profileForm === null && (
+              <div className="grid md:grid-cols-2 gap-4">
+                {!hasClient && (
+                  <button
+                    onClick={() => { setProfileForm("client"); setProfileError(""); }}
+                    className="p-5 text-left rounded-xl bg-[#0a0a0a] border border-neutral-800 hover:border-orange-500/50 transition group"
+                  >
+                    <h3 className="font-semibold mb-1 group-hover:text-orange-500 transition">I want to hire</h3>
+                    <p className="text-neutral-400 text-sm">Create a client profile and post jobs.</p>
+                  </button>
+                )}
+                {!hasFreelancer && (
+                  <button
+                    onClick={() => { setProfileForm("freelancer"); setProfileError(""); }}
+                    className="p-5 text-left rounded-xl bg-[#0a0a0a] border border-neutral-800 hover:border-orange-500/50 transition group"
+                  >
+                    <h3 className="font-semibold mb-1 group-hover:text-orange-500 transition">I want to work</h3>
+                    <p className="text-neutral-400 text-sm">Create a freelancer profile and submit bids.</p>
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* client form */}
+            {profileForm === "client" && (
+              <form onSubmit={handleCreateClient} className="space-y-4">
+                <div>
+                  <label className="text-sm text-neutral-400 block mb-2">Company name</label>
+                  <input
+                    type="text"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    required
+                    className="w-full px-4 py-3 bg-[#0a0a0a] border border-neutral-800 rounded-lg text-white placeholder-neutral-600 focus:outline-none focus:border-orange-500 transition"
+                    placeholder="e.g. BrightLoop Inc."
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    type="submit"
+                    disabled={savingProfile}
+                    className="px-5 py-2.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition"
+                  >
+                    {savingProfile ? "Saving..." : "Create client profile"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setProfileForm(null)}
+                    className="px-5 py-2.5 border border-neutral-700 text-neutral-400 hover:text-white text-sm rounded-lg transition"
+                  >
+                    Back
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* freelancer form */}
+            {profileForm === "freelancer" && (
+              <form onSubmit={handleCreateFreelancer} className="space-y-4">
+                <div>
+                  <label className="text-sm text-neutral-400 block mb-2">Skills</label>
+                  <input
+                    type="text"
+                    value={skills}
+                    onChange={(e) => setSkills(e.target.value)}
+                    required
+                    className="w-full px-4 py-3 bg-[#0a0a0a] border border-neutral-800 rounded-lg text-white placeholder-neutral-600 focus:outline-none focus:border-orange-500 transition"
+                    placeholder="e.g. React, TypeScript, FastAPI"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-neutral-400 block mb-2">Hourly rate ($)</label>
+                  <input
+                    type="number"
+                    value={hourlyRate}
+                    onChange={(e) => setHourlyRate(e.target.value)}
+                    required
+                    className="w-full px-4 py-3 bg-[#0a0a0a] border border-neutral-800 rounded-lg text-white placeholder-neutral-600 focus:outline-none focus:border-orange-500 transition"
+                    placeholder="e.g. 50"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-neutral-400 block mb-2">Short bio</label>
+                  <textarea
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    required
+                    rows={3}
+                    className="w-full px-4 py-3 bg-[#0a0a0a] border border-neutral-800 rounded-lg text-white placeholder-neutral-600 focus:outline-none focus:border-orange-500 transition resize-none"
+                    placeholder="A sentence or two about your experience..."
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    type="submit"
+                    disabled={savingProfile}
+                    className="px-5 py-2.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition"
+                  >
+                    {savingProfile ? "Saving..." : "Create freelancer profile"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setProfileForm(null)}
+                    className="px-5 py-2.5 border border-neutral-700 text-neutral-400 hover:text-white text-sm rounded-lg transition"
+                  >
+                    Back
+                  </button>
+                </div>
+              </form>
+            )}
+          </motion.div>
+        )}
+
+        {/* Tabs + Post a Job button */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -210,7 +417,7 @@ export default function Dashboard() {
             ))}
           </div>
 
-          {tab === "jobs" && (
+          {tab === "jobs" && hasClient && (
             <button
               onClick={() => setShowJobForm(!showJobForm)}
               className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-lg transition"
@@ -221,7 +428,7 @@ export default function Dashboard() {
         </motion.div>
 
         {/* Post Job Form */}
-        {showJobForm && tab === "jobs" && (
+        {showJobForm && tab === "jobs" && hasClient && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -285,7 +492,9 @@ export default function Dashboard() {
             {jobs.length === 0 ? (
               <div className="text-center py-16">
                 <p className="text-neutral-500 text-lg mb-2">No jobs posted yet.</p>
-                <p className="text-neutral-600 text-sm">Click &quot;+ Post a Job&quot; to get started.</p>
+                <p className="text-neutral-600 text-sm">
+                  {hasClient ? "Click \"+ Post a Job\" to get started." : "Add a client profile above to post jobs."}
+                </p>
               </div>
             ) : (
               jobs.map((job, i) => (
@@ -324,7 +533,11 @@ export default function Dashboard() {
             {bids.length === 0 ? (
               <div className="text-center py-16">
                 <p className="text-neutral-500 text-lg mb-2">No bids submitted yet.</p>
-                <a href="/jobs" className="text-orange-500 hover:underline text-sm">Browse jobs and start bidding</a>
+                {hasFreelancer ? (
+                  <a href="/jobs" className="text-orange-500 hover:underline text-sm">Browse jobs and start bidding</a>
+                ) : (
+                  <p className="text-neutral-600 text-sm">Add a freelancer profile above to submit bids.</p>
+                )}
               </div>
             ) : (
               bids.map((bid, i) => (
