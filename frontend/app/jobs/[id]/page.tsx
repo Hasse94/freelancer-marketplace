@@ -40,6 +40,8 @@ export default function JobDetail() {
   const jobId = params.id;
 
   const [job, setJob] = useState<Job | null>(null);
+  const [myClientId, setMyClientId] = useState<number | null>(null);
+  const [isFreelancer, setIsFreelancer] = useState(false);
   const [bids, setBids] = useState<Bid[]>([]);
   const [payingBidId, setPayingBidId] = useState<number | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
@@ -68,20 +70,33 @@ export default function JobDetail() {
 
   const fetchJob = async () => {
     try {
-  const res = await fetch(`${API_URL}/api/jobs/${jobId}`); if (!res.ok) {
+  const res = await fetch(`${API_URL}/api/jobs/${jobId}`); 
+      if (!res.ok) {
         setError("Job not found.");
         return;
       }
       const data = await res.json();
       setJob(data);
 
-      // fetch bids if logged in
+      // if logged in, fetch bids + figure out who I am relative to this job
       if (token) {
-        const bidsRes = await fetch(`${API_URL}/api/bids/job/${jobId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const auth = { Authorization: `Bearer ${token}` };
+
+        const bidsRes = await fetch(`${API_URL}/api/bids/job/${jobId}`, { headers: auth });
         if (bidsRes.ok) setBids(await bidsRes.json());
+
+        // do I own this job? (my client profile id === job.client_id)
+        const clientRes = await fetch(`${API_URL}/api/users/client/me`, { headers: auth }).catch(() => null);
+        if (clientRes?.ok) {
+          const client = await clientRes.json();
+          setMyClientId(client.id);
+        }
+
+        // do I have a freelancer profile? (needed to bid)
+        const freelancerRes = await fetch(`${API_URL}/api/users/freelancer/me`, { headers: auth }).catch(() => null);
+        setIsFreelancer(!!freelancerRes?.ok);
       }
+
     } catch {
       setError("Cannot reach the server.");
     } finally {
@@ -384,7 +399,7 @@ export default function JobDetail() {
                         </div>
                       ) : (
 
-                        token && job.is_open && (
+                        token && job.is_open && myClientId === job.client_id && (
                           <button
                             onClick={() => handleAcceptBid(bid.id)}
                             className="mt-2 px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded-lg transition"
@@ -402,7 +417,7 @@ export default function JobDetail() {
         )}
 
         {/* Submit Bid Form */}
-        {job.is_open && token && (
+        {job.is_open && token && isFreelancer && myClientId !== job.client_id && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
