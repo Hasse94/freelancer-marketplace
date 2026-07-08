@@ -2,12 +2,17 @@
 
 A full-stack freelancer marketplace built with FastAPI, PostgreSQL, Next.js, and Claude AI. Clients post jobs, freelancers bid, and AI handles the matching.
 
+**Live demo:** [freelancehub-plum.vercel.app](https://freelancehub-plum.vercel.app)
+
+> The backend runs on Render's free tier, so the first request after a period of inactivity can take 30-50 seconds while the instance wakes up. After that it's fast.
+
 ## Tech Stack
 
 **Backend:** FastAPI, Python 3.11, PostgreSQL, SQLAlchemy, JWT + bcrypt
 **Frontend:** Next.js 14 (App Router), TypeScript, Tailwind CSS, Framer Motion, React Three Fiber
 **AI:** Claude Haiku (job summarization), Claude Sonnet (freelancer matching)
-**Payments:** Stripe (test mode)
+**Payments:** Stripe (test mode) with webhook verification
+**Deployment:** Vercel (frontend), Render (backend + database)
 
 ## What It Does
 
@@ -15,9 +20,10 @@ A full-stack freelancer marketplace built with FastAPI, PostgreSQL, Next.js, and
 - Claude Haiku extracts skills, complexity, and domain from messy job descriptions
 - Claude Sonnet ranks freelancers (0-100) by skill match, budget fit, and profile quality
 - Freelancers browse jobs and submit proposals
-- Clients accept bids and pay through Stripe
+- Clients accept bids and pay through a Stripe card form
 - Webhook-verified payments with duplicate charge protection
-- Dark-themed UI with a 3D animated hero, built by hand with React Three Fiber
+- One account can hold both a client and a freelancer profile
+- Dark-themed UI with a 3D animated hero, built with React Three Fiber
 
 ## API Endpoints
 
@@ -81,7 +87,6 @@ pip install -r requirements.txt
 Create a `.env` file:
 
 
-
 DATABASE_URL=postgresql://postgres:yourpassword@localhost:5432/freelancer_marketplace
 SECRET_KEY=your_secret_key
 ALGORITHM=HS256
@@ -90,7 +95,7 @@ ANTHROPIC_API_KEY=your_key
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_PUBLISHABLE_KEY=pk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
-
+FRONTEND_URL=http://localhost:3000
 
 
 Create the database tables:
@@ -116,7 +121,7 @@ Create a `.env.local` file:
 
 
 NEXT_PUBLIC_API_URL=http://localhost:8000
-
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 
 
 Run it:
@@ -126,7 +131,9 @@ npm run dev
 
 App runs at http://localhost:3000
 
-**Pages:** landing (with an animated 3D hero), job listing with search/filters, job detail (AI analysis, freelancer matching, bidding), auth (login/signup), and a dashboard with tabs for jobs, bids, and payments.
+**Pages:** landing (animated 3D hero), job listing with search and budget filters, job detail (AI analysis, freelancer matching, bidding, payment), auth, and a dashboard with role setup, job posting, and tabs for jobs, bids, and payments.
+
+**Testing payments:** use Stripe's test card `4242 4242 4242 4242` with any future expiry and any CVC.
 
 ## Roadmap
 
@@ -135,7 +142,7 @@ App runs at http://localhost:3000
 - [x] Phase 3 — Claude AI integration
 - [x] Phase 4 — Stripe payments
 - [x] Phase 5 — Next.js frontend
-- [ ] Phase 6 — Deploy
+- [x] Phase 6 — Deploy (Vercel + Render)
 
 ## License
 
