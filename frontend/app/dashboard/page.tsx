@@ -37,6 +37,7 @@ type Tab = "jobs" | "bids" | "payments";
 
 export default function Dashboard() {
   const [tab, setTab] = useState<Tab>("jobs");
+  const [bidCounts, setBidCounts] = useState<Record<number, number>>({});
   const [jobs, setJobs] = useState<Job[]>([]);
   const [bids, setBids] = useState<Bid[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -102,7 +103,25 @@ export default function Dashboard() {
         fetch(`${API_URL}/api/payments/history`, { headers }).catch(() => null),
       ]);
 
-      if (jobsRes?.ok) setJobs(await jobsRes.json());
+      if (jobsRes?.ok) {
+        const jobsData: Job[] = await jobsRes.json();
+        setJobs(jobsData);
+
+        // count bids on each of my jobs
+        const counts: Record<number, number> = {};
+        await Promise.all(
+          jobsData.map(async (job) => {
+            try {
+              const r = await fetch(`${API_URL}/api/bids/job/${job.id}`, { headers });
+              if (r.ok) {
+                const jobBids = await r.json();
+                counts[job.id] = jobBids.length;
+              }
+            } catch {}
+          })
+        );
+        setBidCounts(counts);
+      }
       if (bidsRes?.ok) setBids(await bidsRes.json());
       if (paymentsRes?.ok) setPayments(await paymentsRes.json());
     } catch {
@@ -510,6 +529,11 @@ export default function Dashboard() {
                     <div>
                       <h3 className="text-lg font-semibold mb-1 group-hover:text-orange-500 transition">{job.title}</h3>
                       <p className="text-neutral-400 text-sm line-clamp-2">{job.description}</p>
+                      {bidCounts[job.id] > 0 && (
+                        <span className="inline-block mt-2 text-xs text-orange-400 font-medium">
+                          {bidCounts[job.id]} {bidCounts[job.id] === 1 ? "bid" : "bids"}
+                        </span>
+                      )}
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-orange-500 font-bold">${job.budget.toLocaleString()}</p>
