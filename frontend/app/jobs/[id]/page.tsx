@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { API_URL } from "../../lib/api";
+import PayNowModal from "../../components/PayNowModal";
 
 interface Job {
   id: number;
@@ -40,6 +41,7 @@ export default function JobDetail() {
 
   const [job, setJob] = useState<Job | null>(null);
   const [bids, setBids] = useState<Bid[]>([]);
+  const [payingBidId, setPayingBidId] = useState<number | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -369,10 +371,19 @@ export default function JobDetail() {
                     <div className="text-right shrink-0">
                       <p className="text-orange-500 font-bold">${bid.bid_amount.toLocaleString()}</p>
                       {bid.is_accepted ? (
-                        <span className="text-xs px-2 py-1 bg-green-500/10 text-green-400 border border-green-500/30 rounded-full mt-2 inline-block">
-                          Accepted
-                        </span>
+                        <div className="mt-2 flex flex-col items-end gap-2">
+                          <span className="text-xs px-2 py-1 bg-green-500/10 text-green-400 border border-green-500/30 rounded-full inline-block">
+                            Accepted
+                          </span>
+                          <button
+                            onClick={() => setPayingBidId(bid.id)}
+                            className="px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium rounded-lg transition"
+                          >
+                            Pay ${bid.bid_amount.toLocaleString()}
+                          </button>
+                        </div>
                       ) : (
+
                         token && job.is_open && (
                           <button
                             onClick={() => handleAcceptBid(bid.id)}
@@ -461,6 +472,18 @@ export default function JobDetail() {
           </motion.div>
         )}
       </div>
+
+      {payingBidId !== null && (
+          <PayNowModal
+            bidId={payingBidId}
+            onClose={() => setPayingBidId(null)}
+            onSuccess={() => {
+              setPayingBidId(null);
+              fetchJob();
+            }}
+          />
+        )}
+
     </div>
   );
 }
