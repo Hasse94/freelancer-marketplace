@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from app.database import get_db
 from app import models, auth, claude_ai
 import json
@@ -80,7 +80,7 @@ def find_matching_freelancers(
     """
     job = _get_owned_job(db, job_id, current_user)
 
-    freelancers_db = db.query(models.Freelancer).all()
+    freelancers_db = db.query(models.Freelancer).options(joinedload(models.Freelancer.user)).all()
 
     if not freelancers_db:
         return {
@@ -90,11 +90,10 @@ def find_matching_freelancers(
 
     freelancers_for_claude = []
     for f in freelancers_db:
-        user = db.query(models.User).filter(models.User.id == f.user_id).first()
         freelancers_for_claude.append({
             "id": f.id,
             # No display-name field yet, so the email prefix stands in
-            "name": user.email.split("@")[0],
+            "name": f.user.email.split("@")[0],
             "skills": f.skills or "Not specified",
             "hourly_rate": f.hourly_rate or 0,
             "bio": f.bio or "No bio provided"
@@ -115,18 +114,21 @@ def find_matching_freelancers(
         freelancers=freelancers_for_claude
     )
 
-    for match in matches:
+    for match in matches:  
         bid = db.query(models.Bid).filter(
             models.Bid.freelancer_id == match["freelancer_id"],
             models.Bid.job_id == job.id
-        ).first()
+        ).first()   
 
         if bid:
             bid.match_score = match["match_score"]
-            db.commit()
+
+    db.commit()
+           
 
     return {
         "job_id": job.id,
         "job_title": job.title,
         "matches": matches
     }
+    
