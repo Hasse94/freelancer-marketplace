@@ -39,9 +39,9 @@ def create_job(
 
 
 @router.get("/", response_model=List[schemas.JobResponse])
-def get_all_jobs(db: Session = Depends(get_db)):
-    """List all open jobs — public, no token needed."""
-    return db.query(models.Job).filter(models.Job.is_open == True).all()
+def get_all_jobs(skip: int = 0, limit: int = 20, db: Session = Depends(get_db)):
+    """List all open jobs — public, no token needed. Paginated: 20 per page by default."""
+    return db.query(models.Job).filter(models.Job.is_open == True).offset(skip).limit(limit).all()
 
 
 @router.get("/{job_id}", response_model=schemas.JobResponse)

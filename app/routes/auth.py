@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from app.database import get_db
 from app import models, schemas, auth
+from app.limiter import limiter
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
@@ -30,8 +31,11 @@ def register(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 
-@router.post("/login", response_model=schemas.Token)
+@router.post("/login")
+@limiter.limit("5/minute")
 def login(
+    request: Request,
+    response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ):
@@ -50,10 +54,16 @@ def login(
         expires_delta=timedelta(minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES)
     )
 
-    return {
-        "access_token": access_token,
-        "token_type": "bearer"
-    }
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=60 * 30
+    )
+
+    return {"message": "Login successful"}
 
 
 @router.get("/me", response_model=schemas.UserResponse)

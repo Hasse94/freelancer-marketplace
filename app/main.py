@@ -1,8 +1,12 @@
+
 import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from app.database import engine, Base
+from app.limiter import limiter
 from app.routes import auth, users, jobs, bids, matching, payments
 
 Base.metadata.create_all(bind=engine)
@@ -12,6 +16,9 @@ app = FastAPI(
     description="A full-stack freelancer marketplace with AI-powered matching",
     version="1.0.0"
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Local dev origins plus the deployed frontend (FRONTEND_URL, set in production)
 allowed_origins = ["http://localhost:3000", "http://127.0.0.1:3000"]

@@ -15,28 +15,39 @@ interface Job {
   created_at: string;
 }
 
+const PAGE_SIZE = 20;
+
 export default function Jobs() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [search, setSearch] = useState("");
   const [minBudget, setMinBudget] = useState("");
   const [maxBudget, setMaxBudget] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchJobs();
+    fetchJobs(0);
   }, []);
 
-  const fetchJobs = async () => {
+  const fetchJobs = async (skip: number) => {
     try {
-      const res = await fetch(`${API_URL}/api/jobs/`);
-      const data = await res.json();
-      setJobs(data);
+      const res = await fetch(`${API_URL}/api/jobs/?skip=${skip}&limit=${PAGE_SIZE}`);
+      const data: Job[] = await res.json();
+      setJobs((prev) => (skip === 0 ? data : [...prev, ...data]));
+      setHasMore(data.length === PAGE_SIZE);
     } catch {
       setError("Cannot reach the API. Is the backend running?");
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
+  };
+
+  const handleLoadMore = () => {
+    setLoadingMore(true);
+    fetchJobs(jobs.length);
   };
 
   const filtered = jobs.filter((job) => {
@@ -155,6 +166,18 @@ export default function Jobs() {
             </motion.a>
           ))}
         </div>
+
+        {!loading && !error && hasMore && filtered.length > 0 && (
+          <div className="text-center mt-10">
+            <button
+              onClick={handleLoadMore}
+              disabled={loadingMore}
+              className="px-6 py-3 bg-[#1a1a1a] border border-neutral-800 rounded-lg text-white hover:border-orange-500/50 transition disabled:opacity-50"
+            >
+              {loadingMore ? "Loading..." : "Load More"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
