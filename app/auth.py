@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
 import bcrypt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -67,7 +67,7 @@ def authenticate_user(db: Session, email: str, password: str):
 
 
 def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    request: Request,
     db: Session = Depends(get_db)
 ):
     """FastAPI dependency: resolve the JWT bearer token to a User or raise 401."""
@@ -76,8 +76,14 @@ def get_current_user(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    
+    token = request.cookies.get("access_token")
+    if token is None:
+        raise credentials_exception
+        
     token_data = verify_token(token, credentials_exception)
     user = get_user_by_email(db, email=token_data.email)
     if user is None:
         raise credentials_exception
     return user
+   

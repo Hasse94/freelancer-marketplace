@@ -5,7 +5,9 @@ from datetime import timedelta
 from app.database import get_db
 from app import models, schemas, auth
 from app.limiter import limiter
+import os
 
+IS_PRODUCTION = os.getenv("ENVIRONMENT") == "production"
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
 
@@ -58,7 +60,7 @@ def login(
         key="access_token",
         value=access_token,
         httponly=True,
-        secure=True,
+        secure=IS_PRODUCTION,
         samesite="lax",
         max_age=60 * 30
     )
