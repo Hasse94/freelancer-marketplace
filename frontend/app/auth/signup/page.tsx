@@ -44,14 +44,12 @@ export default function SignUp() {
       // Auto-login after registration
       const loginRes = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: `username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`,
       });
 
-      const loginData = await loginRes.json();
-
       if (loginRes.ok) {
-        localStorage.setItem("token", loginData.access_token);
         window.location.href = "/dashboard";
       }
     } catch {

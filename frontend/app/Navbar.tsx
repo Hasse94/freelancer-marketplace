@@ -9,27 +9,29 @@ export default function Navbar() {
 
   useEffect(() => {
     setMounted(true);
-    const token = localStorage.getItem("token");
-    if (!token) return;
 
-    // Validate token and get the user's email
+    // The cookie (if any) is sent automatically — just ask the API who we are
     fetch(`${API_URL}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: "include",
     })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data?.email) {
           setEmail(data.email);
-        } else {
-          // token invalid/expired
-          localStorage.removeItem("token");
         }
       })
       .catch(() => {});
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_URL}/api/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch {
+      // Even if the request fails, still send the user home
+    }
     window.location.href = "/";
   };
 
@@ -69,8 +71,8 @@ export default function Navbar() {
               <a href="/auth/login" className="text-sm text-neutral-400 hover:text-white transition">
                 Log in
               </a>
-              <a
-                href="/auth/signup"
+              
+                <a href="/auth/signup"
                 className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-lg transition"
               >
                 Sign Up

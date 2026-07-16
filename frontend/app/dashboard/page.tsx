@@ -66,41 +66,33 @@ export default function Dashboard() {
   const [jobError, setJobError] = useState("");
   const [posting, setPosting] = useState(false);
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-
-  useEffect(() => {
-    if (!token) {
-      window.location.href = "/auth/login";
-      return;
-    }
+useEffect(() => {
     fetchData();
   }, []);
 
-  const headers = { Authorization: `Bearer ${token}` };
-
   const fetchData = async () => {
     try {
-      const meRes = await fetch(`${API_URL}/api/auth/me`, { headers });
+      const meRes = await fetch(`${API_URL}/api/auth/me`, { credentials: "include" });
       if (!meRes.ok) {
-        localStorage.removeItem("token");
         window.location.href = "/auth/login";
         return;
       }
       const me = await meRes.json();
       setEmail(me.email);
 
-      // check which profiles exist
+
+    // check which profiles exist
       const [clientRes, freelancerRes] = await Promise.all([
-        fetch(`${API_URL}/api/users/client/me`, { headers }).catch(() => null),
-        fetch(`${API_URL}/api/users/freelancer/me`, { headers }).catch(() => null),
+        fetch(`${API_URL}/api/users/client/me`, { credentials: "include" }).catch(() => null),
+        fetch(`${API_URL}/api/users/freelancer/me`, { credentials: "include" }).catch(() => null),
       ]);
       setHasClient(!!clientRes?.ok);
       setHasFreelancer(!!freelancerRes?.ok);
 
       const [jobsRes, bidsRes, paymentsRes] = await Promise.all([
-        fetch(`${API_URL}/api/jobs/my/jobs`, { headers }).catch(() => null),
-        fetch(`${API_URL}/api/bids/my/bids`, { headers }).catch(() => null),
-        fetch(`${API_URL}/api/payments/history`, { headers }).catch(() => null),
+        fetch(`${API_URL}/api/jobs/my/jobs`, { credentials: "include" }).catch(() => null),
+        fetch(`${API_URL}/api/bids/my/bids`, { credentials: "include" }).catch(() => null),
+        fetch(`${API_URL}/api/payments/history`, { credentials: "include" }).catch(() => null),
       ]);
 
       if (jobsRes?.ok) {
@@ -110,12 +102,16 @@ export default function Dashboard() {
         // count bids on each of my jobs
         const counts: Record<number, number> = {};
         await Promise.all(
-          jobsData.map(async (job) => {
+          jobsData.map(async (job) => { 
             try {
-              const r = await fetch(`${API_URL}/api/bids/job/${job.id}`, { headers });
-              if (r.ok) {
-                const jobBids = await r.json();
-                counts[job.id] = jobBids.length;
+
+        const r = await fetch(`${API_URL}/api/bids/job/${job.id}`, { credentials: "include" });
+
+         if (r.ok) {
+
+        const jobBids = await r.json();
+        
+        counts[job.id] = jobBids.length;
               }
             } catch {}
           })
@@ -138,7 +134,8 @@ export default function Dashboard() {
     try {
       const res = await fetch(`${API_URL}/api/users/client`, {
         method: "POST",
-        headers: { ...headers, "Content-Type": "application/json" },
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ company_name: companyName }),
       });
       const data = await res.json();
@@ -163,7 +160,8 @@ export default function Dashboard() {
     try {
       const res = await fetch(`${API_URL}/api/users/freelancer`, {
         method: "POST",
-        headers: { ...headers, "Content-Type": "application/json" },
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           skills,
           hourly_rate: parseFloat(hourlyRate),
@@ -194,7 +192,8 @@ export default function Dashboard() {
     try {
       const res = await fetch(`${API_URL}/api/jobs/`, {
         method: "POST",
-        headers: { ...headers, "Content-Type": "application/json" },
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: jobTitle,
           description: jobDesc,
@@ -218,8 +217,15 @@ export default function Dashboard() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_URL}/api/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch {
+      // Even if the request fails, still send the user home
+    }
     window.location.href = "/";
   };
 

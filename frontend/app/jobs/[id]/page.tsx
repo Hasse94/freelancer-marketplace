@@ -59,10 +59,7 @@ export default function JobDetail() {
   const [summarizing, setSummarizing] = useState(false);
   const [matching, setMatching] = useState(false);
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-  const headers: Record<string, string> = token
-    ? { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
-    : {};
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     fetchJob();
@@ -70,7 +67,7 @@ export default function JobDetail() {
 
   const fetchJob = async () => {
     try {
-  const res = await fetch(`${API_URL}/api/jobs/${jobId}`); 
+      const res = await fetch(`${API_URL}/api/jobs/${jobId}`);
       if (!res.ok) {
         setError("Job not found.");
         return;
@@ -78,25 +75,27 @@ export default function JobDetail() {
       const data = await res.json();
       setJob(data);
 
-      // if logged in, fetch bids + figure out who I am relative to this job
-      if (token) {
-        const auth = { Authorization: `Bearer ${token}` };
+      // The token lives in an httpOnly cookie now — invisible to JS —
+      // so we ask the API whether we're logged in instead of checking locally.
+      const meRes = await fetch(`${API_URL}/api/auth/me`, { credentials: "include" }).catch(() => null);
+      const loggedIn = !!meRes?.ok;
+      setIsLoggedIn(loggedIn);
 
-        const bidsRes = await fetch(`${API_URL}/api/bids/job/${jobId}`, { headers: auth });
+      if (loggedIn) {
+        const bidsRes = await fetch(`${API_URL}/api/bids/job/${jobId}`, { credentials: "include" });
         if (bidsRes.ok) setBids(await bidsRes.json());
 
         // do I own this job? (my client profile id === job.client_id)
-        const clientRes = await fetch(`${API_URL}/api/users/client/me`, { headers: auth }).catch(() => null);
+        const clientRes = await fetch(`${API_URL}/api/users/client/me`, { credentials: "include" }).catch(() => null);
         if (clientRes?.ok) {
           const client = await clientRes.json();
           setMyClientId(client.id);
         }
 
         // do I have a freelancer profile? (needed to bid)
-        const freelancerRes = await fetch(`${API_URL}/api/users/freelancer/me`, { headers: auth }).catch(() => null);
+        const freelancerRes = await fetch(`${API_URL}/api/users/freelancer/me`, { credentials: "include" }).catch(() => null);
         setIsFreelancer(!!freelancerRes?.ok);
       }
-
     } catch {
       setError("Cannot reach the server.");
     } finally {
@@ -105,12 +104,11 @@ export default function JobDetail() {
   };
 
   const handleSummarize = async () => {
-    if (!token) return;
     setSummarizing(true);
     try {
       const res = await fetch(`${API_URL}/api/matching/summarize-job/${jobId}`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
       });
       if (res.ok) {
         await fetchJob();
@@ -123,11 +121,10 @@ export default function JobDetail() {
   };
 
   const handleMatch = async () => {
-    if (!token) return;
     setMatching(true);
     try {
       const res = await fetch(`${API_URL}/api/matching/job/${jobId}/matching-freelancers`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
       });
       if (res.ok) {
         const data = await res.json();
@@ -142,17 +139,14 @@ export default function JobDetail() {
 
   const handleBid = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!token) {
-      setBidError("You need to log in first.");
-      return;
-    }
     setBidError("");
     setSubmitting(true);
 
     try {
       const res = await fetch(`${API_URL}/api/bids/${jobId}`, {
         method: "POST",
-        headers,
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           proposal,
           bid_amount: parseFloat(bidAmount),
@@ -161,7 +155,7 @@ export default function JobDetail() {
       const data = await res.json();
 
       if (!res.ok) {
-        setBidError(data.detail || "Failed to submit bid.");
+        setBidError(res.status === 401 ? "You need to log in first." : (data.detail || "Failed to submit bid."));
         return;
       }
 
@@ -177,11 +171,10 @@ export default function JobDetail() {
   };
 
   const handleAcceptBid = async (bidId: number) => {
-    if (!token) return;
     try {
       const res = await fetch(`${API_URL}/api/bids/${bidId}/accept`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
       });
       if (res.ok) {
         await fetchJob();
@@ -306,7 +299,7 @@ export default function JobDetail() {
           ) : (
             <div className="text-center py-4">
               <p className="text-neutral-500 text-sm mb-3">No AI analysis yet.</p>
-              {token && (
+              {isLoggedIn && (
                 <button
                   onClick={handleSummarize}
                   disabled={summarizing}
@@ -351,7 +344,7 @@ export default function JobDetail() {
           ) : (
             <div className="text-center py-4">
               <p className="text-neutral-500 text-sm mb-3">No matches yet.</p>
-              {token && (
+              {isLoggedIn && (
                 <button
                   onClick={handleMatch}
                   disabled={matching}
@@ -397,9 +390,9 @@ export default function JobDetail() {
                             Pay ${bid.bid_amount.toLocaleString()}
                           </button>
                         </div>
-                      ) : (
 
-                        token && job.is_open && myClientId === job.client_id && (
+                        ) : (
+                        isLoggedIn && job.is_open && myClientId === job.client_id && (
                           <button
                             onClick={() => handleAcceptBid(bid.id)}
                             className="mt-2 px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded-lg transition"
@@ -417,7 +410,7 @@ export default function JobDetail() {
         )}
 
         {/* Submit Bid Form */}
-        {job.is_open && token && isFreelancer && myClientId !== job.client_id && (
+        {job.is_open && isLoggedIn && isFreelancer && myClientId !== job.client_id && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -473,7 +466,7 @@ export default function JobDetail() {
           </motion.div>
         )}
 
-        {!token && (
+        {!isLoggedIn && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

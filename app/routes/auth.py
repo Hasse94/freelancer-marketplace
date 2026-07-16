@@ -72,3 +72,9 @@ def login(
 def get_me(current_user: models.User = Depends(auth.get_current_user)):
     """Return the currently logged in user (requires a valid JWT)."""
     return current_user
+
+@router.post("/logout")
+def logout(response: Response):
+    """Clear the access_token cookie, logging the user out."""
+    response.delete_cookie(key="access_token")
+    return {"message": "Logged out"}

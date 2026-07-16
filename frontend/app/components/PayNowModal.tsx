@@ -91,17 +91,14 @@ export default function PayNowModal({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
-
   // Create the payment intent once when the modal opens
   useState(() => {
     (async () => {
       try {
         const res = await fetch(`${API_URL}/api/payments/create-intent`, {
           method: "POST",
+          credentials: "include",
           headers: {
-            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ bid_id: bidId }),

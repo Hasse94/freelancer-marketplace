@@ -16,6 +16,7 @@ export default function Login() {
     try {
       const res = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: `username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`,
       });
@@ -24,7 +25,6 @@ export default function Login() {
         setError(data.detail || "Invalid email or password");
         return;
       }
-      localStorage.setItem("token", data.access_token);
       window.location.href = "/dashboard";
     } catch {
       setError("Cannot reach the server. Is the API running?");
