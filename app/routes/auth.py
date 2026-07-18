@@ -8,6 +8,7 @@ from app.limiter import limiter
 import os
 
 IS_PRODUCTION = os.getenv("ENVIRONMENT") == "production"
+COOKIE_SAMESITE = "none" if IS_PRODUCTION else "lax"
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
 
@@ -61,7 +62,7 @@ def login(
         value=access_token,
         httponly=True,
         secure=IS_PRODUCTION,
-        samesite="lax",
+        samesite=COOKIE_SAMESITE,
         max_age=60 * 30
     )
 
@@ -76,5 +77,10 @@ def get_me(current_user: models.User = Depends(auth.get_current_user)):
 @router.post("/logout")
 def logout(response: Response):
     """Clear the access_token cookie, logging the user out."""
-    response.delete_cookie(key="access_token")
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        secure=IS_PRODUCTION,
+        samesite=COOKIE_SAMESITE,
+    )
     return {"message": "Logged out"}
